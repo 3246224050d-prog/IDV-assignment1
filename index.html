@@ -1,138 +1,118 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>新加坡PSI空气质量数据</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .loading {
-            color: #666;
-            font-style: italic;
-        }
-        .region {
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <h1>新加坡PSI空气质量指数</h1>
-    <p>最后更新时间: <span id="updateTime">加载中...</span></p >
+import json
+
+def print_table(headers, data):
+    """
+    打印表格的简单实现
+    """
+    # 计算每列的最大宽度
+    col_widths = []
+    for i in range(len(headers)):
+        max_width = len(str(headers[i]))
+        for row in data:
+            if i < len(row):
+                max_width = max(max_width, len(str(row[i])))
+        col_widths.append(max_width + 2)  # 加2为了留出空格
     
-    <table id="psiTable">
-        <thead>
-            <tr>
-                <th>区域</th>
-                <th>PSI 指数</th>
-                <th>空气质量</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="3" class="loading">正在加载数据...</td>
-            </tr>
-        </tbody>
-    </table>
+    # 打印表头
+    header_line = ""
+    for i, header in enumerate(headers):
+        header_line += str(header).ljust(col_widths[i])
+    print(header_line)
+    print("-" * len(header_line))
+    
+    # 打印数据行
+    for row in data:
+        row_line = ""
+        for i, cell in enumerate(row):
+            row_line += str(cell).ljust(col_widths[i])
+        print(row_line)
 
-    <script>
-        // 新加坡政府PSI API
-        const apiUrl = 'https://api.data.gov.sg/v1/environment/psi';
-
-        // 获取数据
-        $.ajax({
-            url: apiUrl,
-            method: 'GET',
-            success: function(data) {
-                console.log('获取到的完整数据:', data);
-                
-                // 调用函数处理数据
-                displayPSIData(data);
-            },
-            error: function(error) {
-                console.log('获取数据失败:', error);
-                $('#psiTable tbody').html('<tr><td colspan="3" style="color: red;">获取数据失败，请稍后重试</td></tr>');
-            }
-        });
-
-        // 处理并显示PSI数据
-        function displayPSIData(data) {
-            // 更新最后更新时间
-            if (data.items && data.items[0]) {
-                const updateTime = new Date(data.items[0].update_timestamp).toLocaleString();
-                $('#updateTime').text(updateTime);
-            }
-            
-            // 获取PSI读数
-            if (data.items && data.items[0] && data.items[0].readings) {
-                const readings = data.items[0].readings.psi_twenty_four_hourly;
-                const tableBody = $('#psiTable tbody');
-                
-                // 清空表格
-                tableBody.empty();
-                
-                // 遍历每个区域的PSI数据
-                for (const region in readings) {
-                    if (readings.hasOwnProperty(region)) {
-                        const psiValue = readings[region];
-                        const quality = getAirQuality(psiValue);
-                        
-                        // 创建表格行
-                        const row = `
-                            <tr>
-                                <td class="region">${getRegionChineseName(region)}</td>
-                                <td>${psiValue}</td>
-                                <td>${quality}</td>
-                            </tr>
-                        `;
-                        
-                        tableBody.append(row);
+def main():
+    """
+    主函数 - 处理PSI数据并打印表格
+    """
+    # 你的JSON数据
+    data = {
+        "code": 0,
+        "data": {
+            "regionMetadata": [
+                {"name": "west", "labelLocation": {"latitude": 1.35735, "longitude": 103.7}},
+                {"name": "east", "labelLocation": {"latitude": 1.35735, "longitude": 103.94}},
+                {"name": "central", "labelLocation": {"latitude": 1.35735, "longitude": 103.82}},
+                {"name": "south", "labelLocation": {"latitude": 1.29587, "longitude": 103.82}},
+                {"name": "north", "labelLocation": {"latitude": 1.41803, "longitude": 103.82}}
+            ],
+            "items": [
+                {
+                    "date": "2025-10-06",
+                    "updatedTimestamp": "2025-10-06T20:31:03+08:00",
+                    "timestamp": "2025-10-06T20:00:00+08:00",
+                    "readings": {
+                        "o3_sub_index": {"west": 3, "east": 14, "central": 7, "south": 7, "north": 9},
+                        "no2_one_hour_max": {"west": 46, "east": 40, "central": 41, "south": 36, "north": 30},
+                        "o3_eight_hour_max": {"west": 6, "east": 32, "central": 17, "south": 16, "north": 21},
+                        "psi_twenty_four_hourly": {"west": 58, "east": 59, "central": 62, "south": 53, "north": 56},
+                        "pm10_twenty_four_hourly": {"west": 27, "east": 33, "central": 32, "south": 26, "north": 23},
+                        "pm10_sub_index": {"west": 27, "east": 33, "central": 32, "south": 26, "north": 23},
+                        "pm25_twenty_four_hourly": {"west": 18, "east": 19, "central": 22, "south": 14, "north": 16},
+                        "so2_sub_index": {"west": 3, "east": 2, "central": 4, "south": 2, "north": 7},
+                        "pm25_sub_index": {"west": 58, "east": 59, "central": 62, "south": 53, "north": 56},
+                        "so2_twenty_four_hourly": {"west": 5, "east": 4, "central": 6, "south": 3, "north": 11},
+                        "co_eight_hour_max": {"west": 0, "east": 0, "central": 0, "south": 0, "north": 0},
+                        "co_sub_index": {"west": 3, "east": 4, "central": 2, "south": 4, "north": 4}
                     }
                 }
-                
-                console.log('PSI数据展示完成！');
-            } else {
-                $('#psiTable tbody').html('<tr><td colspan="3">暂无数据</td></tr>');
-            }
-        }
+            ]
+        },
+        "errorMsg": ""
+    }
 
-        // 根据PSI值判断空气质量
-        function getAirQuality(psi) {
-            if (psi <= 50) return '良好';
-            if (psi <= 100) return '中等';
-            if (psi <= 200) return '不健康';
-            if (psi <= 300) return '非常不健康';
-            return '危险';
-        }
+    # 获取读数数据
+    readings = data['data']['items'][0]['readings']
+    
+    # 定义要显示的所有读数类型（按照题目要求的顺序）
+    reading_types = [
+        'o3_sub_index',
+        'o3_eight_hour_max', 
+        'co_sub_index',
+        'co_eight_hour_max',
+        'pm10_sub_index',
+        'pm10_twenty_four_hourly',
+        'so2_sub_index',
+        'so2_twenty_four_hourly',
+        'no2_one_hour_max',
+        'pm25_sub_index',
+        'pm25_twenty_four_hourly',
+        'psi_twenty_four_hourly'
+    ]
+    
+    # 定义区域（从regionMetadata中获取）
+    regions = [region['name'] for region in data['data']['regionMetadata']]
+    
+    # 准备表格数据
+    table_data = []
+    
+    for reading_type in reading_types:
+        if reading_type in readings:
+            row = [reading_type.replace('_', ' ').title()]
+            for region in regions:
+                if region in readings[reading_type]:
+                    row.append(readings[reading_type][region])
+                else:
+                    row.append('N/A')
+            table_data.append(row)
+    
+    # 表格标题
+    headers = ['Reading Type'] + [region.title() for region in regions]
+    
+    print("\n" + "="*80)
+    print("PSI READINGS DATA")
+    print("="*80)
+    print_table(headers, table_data)
+    
+    # 显示更新时间
+    timestamp = data['data']['items'][0].get('timestamp', '')
+    print(f"\n数据更新时间: {timestamp}")
 
-        // 区域名称中英文映射
-        function getRegionChineseName(region) {
-            const regionMap = {
-                'national': '全国',
-                'central': '中部',
-                'west': '西部',
-                'east': '东部',
-                'north': '北部',
-                'south': '南部'
-            };
-            return regionMap[region] || region;
-        }
-    </script>
-</body>
-</html>
+if __name__ == "__main__":
+    main()
