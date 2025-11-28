@@ -1,118 +1,148 @@
-import json
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Singapore PSI Air Quality</title>
 
-def print_table(headers, data):
-    """
-    打印表格的简单实现
-    """
-    # 计算每列的最大宽度
-    col_widths = []
-    for i in range(len(headers)):
-        max_width = len(str(headers[i]))
-        for row in data:
-            if i < len(row):
-                max_width = max(max_width, len(str(row[i])))
-        col_widths.append(max_width + 2)  # 加2为了留出空格
-    
-    # 打印表头
-    header_line = ""
-    for i, header in enumerate(headers):
-        header_line += str(header).ljust(col_widths[i])
-    print(header_line)
-    print("-" * len(header_line))
-    
-    # 打印数据行
-    for row in data:
-        row_line = ""
-        for i, cell in enumerate(row):
-            row_line += str(cell).ljust(col_widths[i])
-        print(row_line)
+<style>
+/* ===== UI Styles ===== */
 
-def main():
-    """
-    主函数 - 处理PSI数据并打印表格
-    """
-    # 你的JSON数据
-    data = {
-        "code": 0,
-        "data": {
-            "regionMetadata": [
-                {"name": "west", "labelLocation": {"latitude": 1.35735, "longitude": 103.7}},
-                {"name": "east", "labelLocation": {"latitude": 1.35735, "longitude": 103.94}},
-                {"name": "central", "labelLocation": {"latitude": 1.35735, "longitude": 103.82}},
-                {"name": "south", "labelLocation": {"latitude": 1.29587, "longitude": 103.82}},
-                {"name": "north", "labelLocation": {"latitude": 1.41803, "longitude": 103.82}}
-            ],
-            "items": [
-                {
-                    "date": "2025-10-06",
-                    "updatedTimestamp": "2025-10-06T20:31:03+08:00",
-                    "timestamp": "2025-10-06T20:00:00+08:00",
-                    "readings": {
-                        "o3_sub_index": {"west": 3, "east": 14, "central": 7, "south": 7, "north": 9},
-                        "no2_one_hour_max": {"west": 46, "east": 40, "central": 41, "south": 36, "north": 30},
-                        "o3_eight_hour_max": {"west": 6, "east": 32, "central": 17, "south": 16, "north": 21},
-                        "psi_twenty_four_hourly": {"west": 58, "east": 59, "central": 62, "south": 53, "north": 56},
-                        "pm10_twenty_four_hourly": {"west": 27, "east": 33, "central": 32, "south": 26, "north": 23},
-                        "pm10_sub_index": {"west": 27, "east": 33, "central": 32, "south": 26, "north": 23},
-                        "pm25_twenty_four_hourly": {"west": 18, "east": 19, "central": 22, "south": 14, "north": 16},
-                        "so2_sub_index": {"west": 3, "east": 2, "central": 4, "south": 2, "north": 7},
-                        "pm25_sub_index": {"west": 58, "east": 59, "central": 62, "south": 53, "north": 56},
-                        "so2_twenty_four_hourly": {"west": 5, "east": 4, "central": 6, "south": 3, "north": 11},
-                        "co_eight_hour_max": {"west": 0, "east": 0, "central": 0, "south": 0, "north": 0},
-                        "co_sub_index": {"west": 3, "east": 4, "central": 2, "south": 4, "north": 4}
-                    }
-                }
-            ]
-        },
-        "errorMsg": ""
-    }
+*{box-sizing:border-box;}
 
-    # 获取读数数据
-    readings = data['data']['items'][0]['readings']
-    
-    # 定义要显示的所有读数类型（按照题目要求的顺序）
-    reading_types = [
-        'o3_sub_index',
-        'o3_eight_hour_max', 
-        'co_sub_index',
-        'co_eight_hour_max',
-        'pm10_sub_index',
-        'pm10_twenty_four_hourly',
-        'so2_sub_index',
-        'so2_twenty_four_hourly',
-        'no2_one_hour_max',
-        'pm25_sub_index',
-        'pm25_twenty_four_hourly',
-        'psi_twenty_four_hourly'
-    ]
-    
-    # 定义区域（从regionMetadata中获取）
-    regions = [region['name'] for region in data['data']['regionMetadata']]
-    
-    # 准备表格数据
-    table_data = []
-    
-    for reading_type in reading_types:
-        if reading_type in readings:
-            row = [reading_type.replace('_', ' ').title()]
-            for region in regions:
-                if region in readings[reading_type]:
-                    row.append(readings[reading_type][region])
-                else:
-                    row.append('N/A')
-            table_data.append(row)
-    
-    # 表格标题
-    headers = ['Reading Type'] + [region.title() for region in regions]
-    
-    print("\n" + "="*80)
-    print("PSI READINGS DATA")
-    print("="*80)
-    print_table(headers, table_data)
-    
-    # 显示更新时间
-    timestamp = data['data']['items'][0].get('timestamp', '')
-    print(f"\n数据更新时间: {timestamp}")
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:linear-gradient(135deg,#dbeafe,#f1f5f9);
+  color:#0f172a;
+}
 
-if __name__ == "__main__":
-    main()
+.page{max-width:900px;margin:40px auto;padding:0 16px;}
+
+.header{text-align:center;margin-bottom:24px;}
+.header h1{margin:0 0 8px;font-size:28px;}
+.subtitle{margin:0;font-size:14px;color:#64748b;}
+
+.controls{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;margin-bottom:20px;flex-wrap:wrap;
+}
+
+#region-select{
+  padding:6px 10px;border-radius:6px;border:1px solid #cbd5f5;background:#fff;
+  font-size:14px;box-shadow:0 1px 2px rgba(0,0,0,.08);
+}
+
+.timestamp{font-size:12px;color:#64748b;}
+
+.card{
+  background:#fff;border-radius:12px;padding:18px;
+  box-shadow:0 10px 28px rgba(0,0,0,.12);
+}
+
+table{width:100%;border-collapse:collapse;}
+thead{background:#eff6ff;}
+
+th,td{
+  padding:10px 12px;border-bottom:1px solid #e2e8f0;font-size:14px;
+}
+tbody tr:nth-child(even){background:#f8fafc;}
+th{font-weight:600;color:#1e293b;}
+
+.error{
+  margin-top:10px;padding:8px 10px;border-radius:8px;
+  background:#fee2e2;color:#991b1b;font-size:13px;display:none;
+}
+</style>
+</head>
+
+
+<body>
+<div class="page">
+
+  <header class="header">
+    <h1>Singapore PSI Air Quality</h1>
+    <p class="subtitle">Live data from API: data.gov.sg</p>
+  </header>
+
+  <section class="controls">
+    <div>
+      <label><b>Region:</b> </label>
+      <select id="region-select">
+        <option value="north">North</option>
+        <option value="south">South</option>
+        <option value="east">East</option>
+        <option value="west">West</option>
+        <option value="central">Central</option>
+      </select>
+    </div>
+    <span id="timestamp" class="timestamp"></span>
+  </section>
+
+  <section class="card">
+    <table id="psi-table">
+      <thead>
+        <tr><th>Air Quality Reading</th><th>Value</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="error-msg" class="error">Failed to load data.</div>
+  </section>
+</div>
+
+
+<script>
+/* ========= JS Fetch + English Reading Names ========= */
+
+const API="https://api.data.gov.sg/v1/environment/psi";
+const tableBody=document.querySelector("#psi-table tbody");
+const regionSelect=document.querySelector("#region-select");
+const timestamp=document.querySelector("#timestamp");
+const errorBox=document.querySelector("#error-msg");
+
+let readings=null;
+
+/* 🔥 English-friendly labels */
+const labels={
+  pm25_sub_index:"PM2.5 Index",
+  pm25_twenty_four_hourly:"PM2.5 (24h Avg)",
+  pm10_sub_index:"PM10 Index",
+  pm10_twenty_four_hourly:"PM10 (24h Avg)",
+  o3_sub_index:"Ozone (O₃) Index",
+  o3_eight_hour_max:"Ozone (O₃) – 8hr Max",
+  co_sub_index:"Carbon Monoxide (CO) Index",
+  co_eight_hour_max:"Carbon Monoxide (CO) – 8hr Max",
+  so2_sub_index:"Sulfur Dioxide (SO₂) Index",
+  so2_twenty_four_hourly:"Sulfur Dioxide (SO₂) – 24h Avg",
+  no2_one_hour_max:"Nitrogen Dioxide (NO₂) – 1hr Max",
+  psi_twenty_four_hourly:"PSI – 24h General Index"
+};
+
+
+/* Fetch PSI values */
+fetch(API)
+.then(r=>r.json())
+.then(data=>{
+  readings=data.items[0].readings;
+  timestamp.textContent="Updated: "+data.items[0].timestamp;
+  render(regionSelect.value);
+})
+.catch(()=>errorBox.style.display="block");
+
+
+regionSelect.addEventListener("change",()=>render(regionSelect.value));
+
+
+/* Render selected region only (no national) */
+function render(region){
+  tableBody.innerHTML="";
+  for(const [key,val] of Object.entries(readings)){
+    let row=document.createElement("tr");
+    let name=labels[key] || key.replace(/_/g," ").toUpperCase();
+    row.innerHTML=`<td>${name}</td><td>${val[region] ?? "N/A"}</td>`;
+    tableBody.appendChild(row);
+  }
+}
+</script>
+
+</body>
+</html>
